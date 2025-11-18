@@ -4,7 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>ระบบคำนวณขนาดยาเคมีบำบัด - Chemotherapy Dosage Calculator</title>
+
+  <!-- FAVICON & PWA ICONS -->
+  <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+  <link rel="icon" type="image/png" sizes="96x96" href="./favicon-96x96.png" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <link rel="manifest" href="./site.webmanifest" />
+  <meta name="theme-color" content="#2563eb" />
+
+  <!-- XLSX LIB -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
     :root{
       --bg:#ffffff;
@@ -153,6 +163,7 @@
     .toast-desc{color:var(--text);font-size:.9rem}
     .toast.error{border-left-color:var(--red)}
     .toast.success{border-left-color:var(--green)}
+    .toast.warning{border-left-color:var(--amber)}
 
     .adv-wrap{background:var(--soft);border-radius:12px;border:1px solid var(--border)}
     .adv-inner{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem}
@@ -386,14 +397,12 @@
             <p class="section-desc">ดาวน์โหลด Template หรืออัปโหลดไฟล์ Excel/JSON เพื่อเพิ่มสูตรยาใหม่</p>
           </div>
           <div class="section-body">
-            <!-- FIX: ใช้คลาส template-info -->
             <div class="template-info">
               <h3>📊 Excel & JSON Template พร้อมตัวอย่าง FOLFOX-4 และ TCH</h3>
               <ul>
-                <li>แผ่นงาน Excel: <b>Regimens</b>, <b>Drugs</b>, <b>Instructions</b></li>
-                <li>JSON: Array ของสูตรยา (โครงสร้างในไฟล์ตัวอย่าง)</li>
+                <li>แผ่นงาน Excel: <b>Regimens</b>, <b>Drugs</b>, <b>Instructions</b> (ถ้ามี)</li>
+                <li>JSON: Array ของสูตรยา หรือ object ที่มี key <code>สูตรยาเคมีบำบัด</code></li>
                 <li>รองรับคำอธิบาย + ความถี่ + maximum_dose</li>
-                <li>ปรับปรุงให้ระบบอ่านได้ตรงตามคอลัมน์</li>
               </ul>
               <div class="actions-bar">
                 <button class="btn btn-primary" onclick="downloadExcelTemplate()">ดาวน์โหลด Excel Template</button>
@@ -420,9 +429,9 @@
             <div class="alert alert-warn" style="margin-top:1rem;">
               <strong>คำแนะนำ:</strong>
               <ul style="margin:.5rem 0 0 1.5rem;">
-                <li>• รูปแบบไฟล์: <span id="fileTypeInfo">Excel (.xlsx, .xls)</span></li>
+                <li>• รูปแบบไฟล์: <span id="fileTypeInfo">Excel (.xlsx, .xls)</span> หรือ JSON (.json)</li>
                 <li>• ขนาดไฟล์สูงสุด: 5 MB</li>
-                <li>• ต้องมี 2 แผ่นงานหลัก: <b>Regimens</b> และ <b>Drugs</b></li>
+                <li>• Excel ต้องมี 2 แผ่นงานหลัก: <b>Regimens</b> และ <b>Drugs</b></li>
               </ul>
             </div>
 
@@ -508,7 +517,10 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       const theme = localStorage.getItem('theme') || 'light';
-      if(theme==='dark'){ document.documentElement.setAttribute('data-theme','dark'); document.getElementById('themeSwitch').classList.add('active'); }
+      if(theme==='dark'){
+        document.documentElement.setAttribute('data-theme','dark');
+        document.getElementById('themeSwitch').classList.add('active');
+      }
       loadData();
       setupEventListeners();
       setUploadFileType('excel');
@@ -527,7 +539,9 @@
 
     async function loadData(){
       const savedRegimens = localStorage.getItem('chemotherapyRegimens');
-      if(savedRegimens){ try{ regimens = JSON.parse(savedRegimens); }catch{} }
+      if(savedRegimens){
+        try{ regimens = JSON.parse(savedRegimens); }catch{}
+      }
       applySettings();
 
       const savedPatientData = localStorage.getItem('patientData');
@@ -544,32 +558,54 @@
       updateRegimenMeta();
       updateRegimenCount();
 
-      // ถ้ามี regimens.json (หรือ data/regimens.json) ให้โหลดเพิ่มอัตโนมัติ
       const hadAny = regimens && regimens.length>0;
       const loaded = await loadExternalRegimens();
-      if(loaded){ updateRegimenSelect(); updateRegimenCount(); }
-      else if(!hadAny){ seedSample(); updateRegimenSelect(); updateRegimenCount(); }
+      if(loaded){
+        updateRegimenSelect();
+        updateRegimenCount();
+      } else if(!hadAny){
+        seedSample();
+        updateRegimenSelect();
+        updateRegimenCount();
+      }
     }
     function setVal(id,v){ const el=document.getElementById(id); if(el) el.value=(v??''); }
 
     function setupEventListeners(){
       ['weight','height','gender','age','serumCreatinine','aucTarget','weightUnit','heightUnit'].forEach(id=>{
         const el=document.getElementById(id);
-        if(el){ el.addEventListener('input', debounce(savePatientDataAndPreview, 500)); el.addEventListener('change', savePatientData); }
+        if(el){
+          el.addEventListener('input', debounce(savePatientDataAndPreview, 500));
+          el.addEventListener('change', savePatientData);
+        }
       });
-      ['weight','height','age'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('blur', validateInput); });
+      ['weight','height','age'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.addEventListener('blur', validateInput);
+      });
       document.getElementById('regimenSearch').addEventListener('input', updateRegimenSelect);
 
       const dropZone=document.getElementById('dropZone');
       ['dragover','dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,e=>e.preventDefault()));
       dropZone.addEventListener('dragover',e=>e.currentTarget.classList.add('dragover'));
       dropZone.addEventListener('dragleave',e=>e.currentTarget.classList.remove('dragover'));
-      dropZone.addEventListener('drop',e=>{ e.currentTarget.classList.remove('dragover'); const f=e.dataTransfer.files[0]; if(f) handleFile(f); });
+      dropZone.addEventListener('drop',e=>{
+        e.currentTarget.classList.remove('dragover');
+        const f=e.dataTransfer.files[0];
+        if(f) handleFile(f);
+      });
       dropZone.addEventListener('click',()=>document.getElementById('fileInput').click());
-      dropZone.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); document.getElementById('fileInput').click(); }});
+      dropZone.addEventListener('keydown',e=>{
+        if(e.key==='Enter'||e.key===' '){
+          e.preventDefault();
+          document.getElementById('fileInput').click();
+        }
+      });
 
       document.getElementById('themeSwitch').addEventListener('click', toggleTheme);
-      document.getElementById('themeSwitch').addEventListener('keydown', e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggleTheme(); } });
+      document.getElementById('themeSwitch').addEventListener('keydown', e=>{
+        if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggleTheme(); }
+      });
 
       document.getElementById('printBtn').addEventListener('click', printResults);
       document.getElementById('exportBtn').addEventListener('click', exportResults);
@@ -587,8 +623,12 @@
 
     function savePatientDataAndPreview(){ savePatientData(); updatePreview(); }
     function savePatientData(){
-      const p = { weight:g('weight'), weightUnit:g('weightUnit'), height:g('height'), heightUnit:g('heightUnit'),
-        gender:g('gender'), age:g('age'), serumCreatinine:g('serumCreatinine'), aucTarget:g('aucTarget') };
+      const p = {
+        weight:g('weight'), weightUnit:g('weightUnit'),
+        height:g('height'), heightUnit:g('heightUnit'),
+        gender:g('gender'), age:g('age'),
+        serumCreatinine:g('serumCreatinine'), aucTarget:g('aucTarget')
+      };
       localStorage.setItem('patientData', JSON.stringify(p));
     }
     function updatePreview(){
@@ -597,34 +637,63 @@
       const weightUnit = g('weightUnit'); const heightUnit = g('heightUnit');
       const gender = g('gender'); const age = parseInt(getNum('age'));
       let scr = parseFloat(getNum('serumCreatinine'));
-      if (!weight || !height || weight<=0 || height<=0){ document.getElementById('previewCard').style.display='none'; return; }
+
+      if (!weight || !height || weight<=0 || height<=0){
+        document.getElementById('previewCard').style.display='none';
+        return;
+      }
       let weightKg = (weightUnit==='lb')? weight*0.453592: weight;
       let heightCm = (heightUnit==='in')? height*2.54: height;
       const bsa = Math.sqrt((weightKg*heightCm)/3600);
-      if(!isNaN(scr) && settings.useMinScr){ scr = Math.max(scr, parseFloat(settings.minScr||0)); }
+
+      if(!isNaN(scr) && settings.useMinScr){
+        scr = Math.max(scr, parseFloat(settings.minScr||0));
+      }
       let crcl = 0;
-      if(scr && age && scr>0 && age>0){ crcl=((140-age)*weightKg)/(scr*72); if(gender==='female') crcl*=0.85; }
+      if(scr && age && scr>0 && age>0){
+        crcl=((140-age)*weightKg)/(scr*72);
+        if(gender==='female') crcl*=0.85;
+      }
       setText('previewBSA', `${bsa.toFixed(2)} m²`);
       setText('previewCrCl', crcl>0? `${crcl.toFixed(2)} mL/min`:'-');
       document.getElementById('previewCard').style.display='block';
     }
     function validateInput(e){
-      const el=e.target; const val=parseFloat(el.value); const err=document.getElementById(el.id+'-err'); if(!err) return;
-      if(el.validity.valid && val>0){ err.textContent=''; err.className='hint'; el.style.borderColor=''; }
-      else{ let msg=''; if(val<=0) msg='ต้องเป็นค่าบวก';
+      const el=e.target;
+      const val=parseFloat(el.value);
+      const err=document.getElementById(el.id+'-err');
+      if(!err) return;
+
+      if(el.validity.valid && val>0){
+        err.textContent='';
+        err.className='hint';
+        el.style.borderColor='';
+      } else {
+        let msg='';
+        if(val<=0) msg='ต้องเป็นค่าบวก';
         else if(el.id==='weight'&&val>300) msg='น้ำหนักสูงสุด 300 kg';
         else if(el.id==='height'&&val>250) msg='ส่วนสูงสูงสุด 250 cm';
         else if(el.id==='age'&&val>120) msg='อายุสูงสุด 120 ปี';
-        err.textContent=msg; err.className='hint'+(msg?' error':''); el.style.borderColor='var(--red)';}
+        err.textContent=msg;
+        err.className='hint'+(msg?' error':'');
+        el.style.borderColor='var(--red)';
+      }
     }
 
     function switchTab(event,name){
       ['home','upload','settings'].forEach(t=>{
-        const el=document.getElementById(`tab-${t}`); if(el) el.style.display=(t===name?'block':'none');
-        const btn=document.getElementById(`tab-${t}-btn`); if(btn){ btn.setAttribute('aria-selected', t===name); btn.classList.toggle('active', t===name); }
+        const el=document.getElementById(`tab-${t}`);
+        if(el) el.style.display=(t===name?'block':'none');
+        const btn=document.getElementById(`tab-${t}-btn`);
+        if(btn){
+          btn.setAttribute('aria-selected', t===name);
+          btn.classList.toggle('active', t===name);
+        }
       });
       document.getElementById('main').focus();
-      if(window.innerWidth<=960){ window.scrollTo({top:0,behavior:'smooth'}); }
+      if(window.innerWidth<=960){
+        window.scrollTo({top:0,behavior:'smooth'});
+      }
     }
 
     /* ---------- กลุ่มมะเร็ง: ตัวช่วยแม็ป ---------- */
@@ -652,7 +721,8 @@
       return 'Other / Unspecified';
     }
     const GROUP_ORDER = [
-      'Breast','Colorectal','Gynecologic – Ovarian','Gynecologic – Cervical','Gynecologic – Endometrial',
+      'Breast','Colorectal',
+      'Gynecologic – Ovarian','Gynecologic – Cervical','Gynecologic – Endometrial',
       'Lung','Gastric','Pancreatic','Hepatobiliary','Head & Neck','Hematologic',
       'GU – Prostate','GU – Bladder','GU – Kidney','GU – Testicular',
       'CNS','Sarcoma','Melanoma','Other / Unspecified'
@@ -660,9 +730,25 @@
 
     function setUploadFileType(type){
       uploadFileType=type;
-      const jsonBtn=document.getElementById('jsonBtn'); const excelBtn=document.getElementById('excelBtn');
-      if(type==='json'){ jsonBtn.className='btn btn-primary'; excelBtn.className='btn btn-muted'; setText('fileTypeText','JSON'); setText('fileTypeBtnText','JSON'); setText('fileTypeInfo','JSON (.json)'); document.getElementById('fileInput').accept='.json'; }
-      else{ jsonBtn.className='btn btn-muted'; excelBtn.className='btn btn-primary'; setText('fileTypeText','Excel'); setText('fileTypeBtnText','Excel'); setText('fileTypeInfo','Excel (.xlsx, .xls)'); document.getElementById('fileInput').accept='.xlsx,.xls'; }
+      const jsonBtn=document.getElementById('jsonBtn');
+      const excelBtn=document.getElementById('excelBtn');
+      const fileInput=document.getElementById('fileInput');
+
+      if(type==='json'){
+        jsonBtn.className='btn btn-primary';
+        excelBtn.className='btn btn-muted';
+        setText('fileTypeText','JSON');
+        setText('fileTypeBtnText','JSON');
+        setText('fileTypeInfo','JSON (.json)');
+        if(fileInput) fileInput.accept='.json';
+      } else {
+        jsonBtn.className='btn btn-muted';
+        excelBtn.className='btn btn-primary';
+        setText('fileTypeText','Excel');
+        setText('fileTypeBtnText','Excel');
+        setText('fileTypeInfo','Excel (.xlsx, .xls)');
+        if(fileInput) fileInput.accept='.xlsx,.xls';
+      }
     }
 
     function updateRegimenSelect(){
@@ -703,8 +789,14 @@
         frag.appendChild(og);
       };
 
-      GROUP_ORDER.forEach(label => { if (groups.has(label)) appendGroup(label, groups.get(label)); });
-      Array.from(groups.keys()).filter(k => !GROUP_ORDER.includes(k)).sort().forEach(label => appendGroup(label, groups.get(label)));
+      GROUP_ORDER.forEach(label => {
+        if (groups.has(label)) appendGroup(label, groups.get(label));
+      });
+      Array.from(groups.keys())
+        .filter(k => !GROUP_ORDER.includes(k))
+        .sort()
+        .forEach(label => appendGroup(label, groups.get(label)));
+
       sel.appendChild(frag);
 
       if (prev && Array.from(sel.options).some(o => o.value === prev)) sel.value = prev;
@@ -713,9 +805,17 @@
     }
     function updateRegimenCount(c=regimens.length){ setText('regimenCount', c); }
     function updateRegimenMeta(){
-      const val=g('regimenSelect'); const rg=regimens.find(r=>r['ชื่อสูตรยา']===val); const box=document.getElementById('regimenMeta');
-      if(rg){ setText('metaName', rg['ชื่อสูตรยา']||'-'); setText('metaCancer', rg['ชนิดของมะเร็ง']||'-'); setText('metaCycle', rg['รอบการรักษา']||'-'); box.style.display='block'; }
-      else{ box.style.display='none'; }
+      const val=g('regimenSelect');
+      const rg=regimens.find(r=>r['ชื่อสูตรยา']===val);
+      const box=document.getElementById('regimenMeta');
+      if(rg){
+        setText('metaName', rg['ชื่อสูตรยา']||'-');
+        setText('metaCancer', rg['ชนิดของมะเร็ง']||'-');
+        setText('metaCycle', rg['รอบการรักษา']||'-');
+        box.style.display='block';
+      } else {
+        box.style.display='none';
+      }
     }
 
     /* ===== RESET: ล้างผู้ป่วย + ผลคำนวณ + “ล้างสูตรยาและช่องค้นหา” ===== */
@@ -741,38 +841,70 @@
       document.getElementById('resultsTableBody').innerHTML='';
       document.getElementById('mobileResultsTable').innerHTML='';
       ['bsaResult','bsaUsed','crclResult','crclUsed'].forEach(id=>setText(id,'-'));
-      const cycle=document.getElementById('cycleSummary'); cycle.innerHTML=''; cycle.style.display='none';
-      res.style.display='none'; lastResults=null; if(res.dataset) delete res.dataset.scrolledOnce;
+      const cycle=document.getElementById('cycleSummary');
+      cycle.innerHTML='';
+      cycle.style.display='none';
+      res.style.display='none';
+      lastResults=null;
+      if(res.dataset) delete res.dataset.scrolledOnce;
     }
 
     function calculateDosage(){
-      const calcBtn=document.getElementById('calculateBtn'), calcText=document.getElementById('calcText'), calcLoading=document.getElementById('calcLoading');
-      calcText.style.display='none'; calcLoading.style.display='inline-block'; calcBtn.disabled=true;
+      const calcBtn=document.getElementById('calculateBtn'),
+            calcText=document.getElementById('calcText'),
+            calcLoading=document.getElementById('calcLoading');
+      calcText.style.display='none';
+      calcLoading.style.display='inline-block';
+      calcBtn.disabled=true;
 
       setTimeout(()=>{
-        calcText.style.display='inline-flex'; calcLoading.style.display='none'; calcBtn.disabled=false;
+        calcText.style.display='inline-flex';
+        calcLoading.style.display='none';
+        calcBtn.disabled=false;
 
-        const weight=parseFloat(getNum('weight')), height=parseFloat(getNum('height'));
-        const weightUnit=g('weightUnit'), heightUnit=g('heightUnit'), gender=g('gender');
-        const age=parseInt(getNum('age')); let scr=parseFloat(getNum('serumCreatinine'));
-        const aucTarget=parseFloat(getNum('aucTarget')) || settings.defaultAUC; const selected=g('regimenSelect');
+        const weight=parseFloat(getNum('weight')),
+              height=parseFloat(getNum('height'));
+        const weightUnit=g('weightUnit'),
+              heightUnit=g('heightUnit'),
+              gender=g('gender');
+        const age=parseInt(getNum('age'));
+        let scr=parseFloat(getNum('serumCreatinine'));
+        const aucTarget=parseFloat(getNum('aucTarget')) || settings.defaultAUC;
+        const selected=g('regimenSelect');
 
-        if(!weight || !height || !selected){ showToast('ข้อมูลไม่ครบ','กรุณากรอกน้ำหนัก/ส่วนสูง และเลือกสูตรยา','error'); return; }
+        if(!weight || !height || !selected){
+          showToast('ข้อมูลไม่ครบ','กรุณากรอกน้ำหนัก/ส่วนสูง และเลือกสูตรยา','error');
+          return;
+        }
         let weightKg=(weightUnit==='lb')? weight*0.453592: weight;
         let heightCm=(heightUnit==='in')? height*2.54: height;
-        if(weightKg<=0||weightKg>300){ showToast('น้ำหนักผิดพลาด','น้ำหนักต้องอยู่ในช่วง 0–300 kg','error'); return; }
-        if(heightCm<=0||heightCm>250){ showToast('ส่วนสูงผิดพลาด','ส่วนสูงต้องอยู่ในช่วง 0–250 cm','error'); return; }
+        if(weightKg<=0||weightKg>300){
+          showToast('น้ำหนักผิดพลาด','น้ำหนักต้องอยู่ในช่วง 0–300 kg','error');
+          return;
+        }
+        if(heightCm<=0||heightCm>250){
+          showToast('ส่วนสูงผิดพลาด','ส่วนสูงต้องอยู่ในช่วง 0–250 cm','error');
+          return;
+        }
 
         const bsa=Math.sqrt((weightKg*heightCm)/3600);
         const bsaUsed = settings.useBsaLimit ? Math.min(bsa, parseFloat(settings.bsaLimit||bsa)) : bsa;
 
-        if(!isNaN(scr) && settings.useMinScr){ scr=Math.max(scr, parseFloat(settings.minScr||0)); }
+        if(!isNaN(scr) && settings.useMinScr){
+          scr=Math.max(scr, parseFloat(settings.minScr||0));
+        }
         let crcl=0;
-        if(scr && age){ crcl=((140-age)*weightKg)/(scr*72); if(gender==='female') crcl*=0.85; }
+        if(scr && age){
+          crcl=((140-age)*weightKg)/(scr*72);
+          if(gender==='female') crcl*=0.85;
+        }
         const crclUsed = crcl>0 ? (settings.useGfrLimit ? Math.min(crcl, parseFloat(settings.gfrLimit||crcl)) : crcl) : 0;
 
         const rg=regimens.find(r=>r['ชื่อสูตรยา']===selected);
-        if(!rg){ showToast('ไม่พบสูตรยา','กรุณาเลือกสูตรยาที่มีอยู่ในระบบ','error'); return; }
+        if(!rg){
+          showToast('ไม่พบสูตรยา','กรุณาเลือกสูตรยาที่มีอยู่ในระบบ','error');
+          return;
+        }
 
         const rows=[];
         rg['รายการยา'].forEach(drug=>{
@@ -785,28 +917,72 @@
           const numMatch=doseStr.match(/(\d+(?:\.\d+)?)/);
 
           if(hasAUC){
-            type='auc'; const aucVal=parseFloat((doseStr.match(/auc\s*([\d\.]+)/i)||[])[1] || aucTarget);
-            if(crclUsed>0){ calcMg=aucVal*(crclUsed+25); method=`AUC ${aucVal} × (CrClใช้ ${crclUsed.toFixed(2)} + 25)`; }
-            else{ method='ต้องการค่า Serum Creatinine/อายุ'; note='กรุณากรอก Serum Creatinine และอายุเพื่อคำนวณ Carboplatin'; calcMg=0; }
-          }else if(hasMgM2 && numMatch){
-            type='bsa'; const perM2=parseFloat(numMatch[1]); calcMg=perM2*bsaUsed; method=`${perM2} mg/m² × BSAใช้ ${bsaUsed.toFixed(2)}`; perUnitBase=bsaUsed;
-          }else if(hasMgKg && numMatch){
-            type='kg'; const perKg=parseFloat(numMatch[1]); calcMg=perKg*weightKg; method=`${perKg} mg/kg × น้ำหนัก ${weightKg.toFixed(1)} kg`; perUnitBase=weightKg;
-          }else{
-            if(numMatch){ calcMg=parseFloat(numMatch[1]); method='ขนาดยาคงที่'; } else { calcMg=0; method='ไม่พบตัวเลข'; }
+            type='auc';
+            const aucVal=parseFloat((doseStr.match(/auc\s*([\d\.]+)/i)||[])[1] || aucTarget);
+            if(crclUsed>0){
+              calcMg=aucVal*(crclUsed+25);
+              method=`AUC ${aucVal} × (CrClใช้ ${crclUsed.toFixed(2)} + 25)`;
+            } else {
+              method='ต้องการค่า Serum Creatinine/อายุ';
+              note='กรุณากรอก Serum Creatinine และอายุเพื่อคำนวณ Carboplatin';
+              calcMg=0;
+            }
+          } else if(hasMgM2 && numMatch){
+            type='bsa';
+            const perM2=parseFloat(numMatch[1]);
+            calcMg=perM2*bsaUsed;
+            method=`${perM2} mg/m² × BSAใช้ ${bsaUsed.toFixed(2)}`;
+            perUnitBase=bsaUsed;
+          } else if(hasMgKg && numMatch){
+            type='kg';
+            const perKg=parseFloat(numMatch[1]);
+            calcMg=perKg*weightKg;
+            method=`${perKg} mg/kg × น้ำหนัก ${weightKg.toFixed(1)} kg`;
+            perUnitBase=weightKg;
+          } else {
+            if(numMatch){
+              calcMg=parseFloat(numMatch[1]);
+              method='ขนาดยาคงที่';
+            } else {
+              calcMg=0;
+              method='ไม่พบตัวเลข';
+            }
           }
 
-          let finalMg=calcMg; const maxRaw=drug['maximum_dose'];
-          if(maxRaw){ const m=String(maxRaw).match(/(\d+(?:\.\d+)?)/); if(m){ const maxDose=parseFloat(m[1]); if(finalMg>maxDose){ finalMg=maxDose; note+=(note?' • ':'')+`จำกัดตามขนาดสูงสุด ${maxDose} mg`; } } }
+          let finalMg=calcMg;
+          const maxRaw=drug['maximum_dose'];
+          if(maxRaw){
+            const m=String(maxRaw).match(/(\d+(?:\.\d+)?)/);
+            if(m){
+              const maxDose=parseFloat(m[1]);
+              if(finalMg>maxDose){
+                finalMg=maxDose;
+                note+=(note?' • ':'')+`จำกัดตามขนาดสูงสุด ${maxDose} mg`;
+              }
+            }
+          }
 
           finalMg=roundWithRule(finalMg);
 
           if(type==='kg' && perUnitBase>0) unitAchieved=`${(finalMg/perUnitBase).toFixed(2)} mg/kg`;
           else if(type==='bsa' && perUnitBase>0) unitAchieved=`${(finalMg/perUnitBase).toFixed(2)} mg/m²`;
 
-          if(type==='auc' && crclUsed===0){ note+=(note?' • ':'')+'ไม่สามารถคำนวณได้ (ขาดค่าจำเป็น)'; }
+          if(type==='auc' && crclUsed===0){
+            note+=(note?' • ':'')+'ไม่สามารถคำนวณได้ (ขาดค่าจำเป็น)';
+          }
 
-          rows.push({drugName:drug['ชื่อยา'], order:doseStr, calcMg, finalMg, maxDose:drug['maximum_dose']||'-', details:method, note, type, unitAchieved, freq:drug['ความถี่ในการให้']||''});
+          rows.push({
+            drugName:drug['ชื่อยา'],
+            order:doseStr,
+            calcMg,
+            finalMg,
+            maxDose:drug['maximum_dose']||'-',
+            details:method,
+            note,
+            type,
+            unitAchieved,
+            freq:drug['ความถี่ในการให้']||''
+          });
         });
 
         displayResults({ bsa,bsaUsed,crcl,crclUsed, rows, regimenName:rg['ชื่อสูตรยา'], regimen:rg });
@@ -815,7 +991,14 @@
       },100);
     }
 
-    function getPatientSnapshot(){ return { weight:g('weight'), weightUnit:g('weightUnit'), height:g('height'), heightUnit:g('heightUnit'), gender:g('gender'), age:g('age'), serumCreatinine:g('serumCreatinine'), aucTarget:g('aucTarget') }; }
+    function getPatientSnapshot(){
+      return {
+        weight:g('weight'), weightUnit:g('weightUnit'),
+        height:g('height'), heightUnit:g('heightUnit'),
+        gender:g('gender'), age:g('age'),
+        serumCreatinine:g('serumCreatinine'), aucTarget:g('aucTarget')
+      };
+    }
 
     function roundWithRule(v){
       const step=parseFloat(settings.roundingStep||1);
@@ -829,9 +1012,18 @@
     }
 
     function preserveScroll(updateFn, anchorId='results'){
-      const y=window.scrollY, anchor=document.getElementById(anchorId), beforeTop=anchor?anchor.getBoundingClientRect().top:0;
+      const y=window.scrollY,
+            anchor=document.getElementById(anchorId),
+            beforeTop=anchor?anchor.getBoundingClientRect().top:0;
       updateFn();
-      requestAnimationFrame(()=>{ if(!anchor){ window.scrollTo({top:y}); return; } const afterTop=anchor.getBoundingClientRect().top; window.scrollTo({top: y + (afterTop-beforeTop)}); });
+      requestAnimationFrame(()=>{
+        if(!anchor){
+          window.scrollTo({top:y});
+          return;
+        }
+        const afterTop=anchor.getBoundingClientRect().top;
+        window.scrollTo({top: y + (afterTop-beforeTop)});
+      });
     }
     function displayResults(p){
       setText('bsaResult', `${p.bsa.toFixed(2)} m²`);
@@ -839,9 +1031,11 @@
       setText('crclResult', p.crcl>0? `${p.crcl.toFixed(2)} mL/min`:'-');
       setText('crclUsed', p.crclUsed>0? `${p.crclUsed.toFixed(2)} mL/min`:'-');
 
-      const tbody=document.getElementById('resultsTableBody'); const mobile=document.getElementById('mobileResultsTable');
+      const tbody=document.getElementById('resultsTableBody');
+      const mobile=document.getElementById('mobileResultsTable');
       preserveScroll(()=>{
-        tbody.innerHTML=''; mobile.innerHTML='';
+        tbody.innerHTML='';
+        mobile.innerHTML='';
         p.rows.forEach((r,i)=>{
           tbody.innerHTML += `
             <tr>
@@ -854,7 +1048,9 @@
               <td>
                 <div>${escapeHtml(r.details)}</div>
                 ${r.note? `<div class="note-highlight">${escapeHtml(r.note)}</div>`:''}
-                ${r.finalMg && r.calcMg && r.finalMg!==r.calcMg ? `<div style="color: var(--muted); font-size:.85rem; margin-top:.25rem;">(ก่อนปัด/จำกัด: ${r.calcMg.toFixed(2)} mg)</div>`:''}
+                ${r.finalMg && r.calcMg && r.finalMg!==r.calcMg
+                  ? `<div style="color: var(--muted); font-size:.85rem; margin-top:.25rem;">(ก่อนปัด/จำกัด: ${r.calcMg.toFixed(2)} mg)</div>`
+                  :''}
               </td>
             </tr>`;
           mobile.innerHTML += `
@@ -873,42 +1069,247 @@
       },'results');
 
       setupTableViewToggleOnce();
-      const res=document.getElementById('results'); res.style.display='block';
-      if(!res.dataset.scrolledOnce){ res.dataset.scrolledOnce='1'; requestAnimationFrame(()=>res.scrollIntoView({behavior:'smooth',block:'start'})); }
+      const res=document.getElementById('results');
+      res.style.display='block';
+      if(!res.dataset.scrolledOnce){
+        res.dataset.scrolledOnce='1';
+        requestAnimationFrame(()=>res.scrollIntoView({behavior:'smooth',block:'start'}));
+      }
       renderCycleSummaryIfApplicable(p);
     }
     function setupTableViewToggleOnce(){
       if(tableViewListenerAttached) return;
-      const desktop=document.querySelector('.desktop-table'); const mobile=document.getElementById('mobileResultsTable'); if(!desktop||!mobile) return;
+      const desktop=document.querySelector('.desktop-table');
+      const mobile=document.getElementById('mobileResultsTable');
+      if(!desktop||!mobile) return;
       const mq=window.matchMedia('(max-width: 768px)');
-      const apply=()=>{ if(mq.matches){ desktop.style.display='none'; mobile.style.display='block'; } else { desktop.style.display='table'; mobile.style.display='none'; } };
-      apply(); if(mq.addEventListener) mq.addEventListener('change',apply); else mq.addListener(apply);
+      const apply=()=>{
+        if(mq.matches){
+          desktop.style.display='none';
+          mobile.style.display='block';
+        } else {
+          desktop.style.display='table';
+          mobile.style.display='none';
+        }
+      };
+      apply();
+      if(mq.addEventListener) mq.addEventListener('change',apply);
+      else mq.addListener(apply);
       tableViewListenerAttached=true;
     }
     function renderCycleSummaryIfApplicable(p){
-      const box=document.getElementById('cycleSummary'); box.style.display='none'; box.innerHTML='';
+      const box=document.getElementById('cycleSummary');
+      box.style.display='none';
+      box.innerHTML='';
+
       if(/tch regimen/i.test(p.regimenName||'')){
         const getRow=(k)=>p.rows.find(r=>new RegExp(k,'i').test(r.drugName));
-        const dtx=getRow('Docetaxel'); const cbdca=getRow('Carboplatin'); const h2_load=getRow('Trastuzumab.*loading'); const h2_maint=getRow('Trastuzumab.*maintenance');
+        const dtx=getRow('Docetaxel');
+        const cbdca=getRow('Carboplatin');
+        const h2_load=getRow('Trastuzumab.*loading');
+        const h2_maint=getRow('Trastuzumab.*maintenance');
+
         const cycle1=[], cycle2to6=[], cycle7to18=[];
-        if(dtx){ cycle1.push(['Docetaxel', dtx.finalMg, dtx.unitAchieved]); cycle2to6.push(['Docetaxel', dtx.finalMg, dtx.unitAchieved]); }
-        if(cbdca){ cycle1.push(['Carboplatin', cbdca.finalMg, '-']); cycle2to6.push(['Carboplatin', cbdca.finalMg, '-']); }
-        if(h2_load){ cycle1.push(['Trastuzumab (loading)', h2_load.finalMg, h2_load.unitAchieved]); }
-        if(h2_maint){ cycle2to6.push(['Trastuzumab (maintenance)', h2_maint.finalMg, h2_maint.unitAchieved]); cycle7to18.push(['Trastuzumab (maintenance)', h2_maint.finalMg, h2_maint.unitAchieved]); }
-        const tbl=(title,arr)=>`<div style="margin-top:.75rem"><div class="badge badge-blue" style="margin-bottom:.5rem">${title}</div><div class="table-wrap"><table><thead><tr><th>ยา</th><th>ขนาด (mg)</th><th>ค่าที่ได้จริงต่อหน่วย</th></tr></thead><tbody>${arr.map(r=>`<tr><td>${r[0]}</td><td><span class="dose-highlight">${r[1]?r[1].toFixed(2):'-'}</span></td><td>${r[2]||'-'}</td></tr>`).join('')}</tbody></table></div></div>`;
-        box.innerHTML=`<h4 style="font-weight:800;margin-bottom:.25rem">สรุปตามรอบการรักษา (TCH)</h4><div class="hint">Cycle 1: Trastuzumab 8 mg/kg, Cycle 2–6 & 7–18: Trastuzumab 6 mg/kg</div>${tbl('Cycle 1',cycle1)}${tbl('Cycle 2–6',cycle2to6)}${tbl('Cycle 7–18',cycle7to18)}`;
+        if(dtx){
+          cycle1.push(['Docetaxel', dtx.finalMg, dtx.unitAchieved]);
+          cycle2to6.push(['Docetaxel', dtx.finalMg, dtx.unitAchieved]);
+        }
+        if(cbdca){
+          cycle1.push(['Carboplatin', cbdca.finalMg, '-']);
+          cycle2to6.push(['Carboplatin', cbdca.finalMg, '-']);
+        }
+        if(h2_load){
+          cycle1.push(['Trastuzumab (loading)', h2_load.finalMg, h2_load.unitAchieved]);
+        }
+        if(h2_maint){
+          cycle2to6.push(['Trastuzumab (maintenance)', h2_maint.finalMg, h2_maint.unitAchieved]);
+          cycle7to18.push(['Trastuzumab (maintenance)', h2_maint.finalMg, h2_maint.unitAchieved]);
+        }
+
+        const tbl=(title,arr)=>`
+          <div style="margin-top:.75rem">
+            <div class="badge badge-blue" style="margin-bottom:.5rem">${title}</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ยา</th><th>ขนาด (mg)</th><th>ค่าที่ได้จริงต่อหน่วย</th></tr></thead>
+                <tbody>
+                  ${arr.map(r=>`
+                    <tr>
+                      <td>${r[0]}</td>
+                      <td><span class="dose-highlight">${r[1]?r[1].toFixed(2):'-'}</span></td>
+                      <td>${r[2]||'-'}</td>
+                    </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>`;
+
+        box.innerHTML=`
+          <h4 style="font-weight:800;margin-bottom:.25rem">สรุปตามรอบการรักษา (TCH)</h4>
+          <div class="hint">Cycle 1: Trastuzumab 8 mg/kg, Cycle 2–6 & 7–18: Trastuzumab 6 mg/kg</div>
+          ${tbl('Cycle 1',cycle1)}
+          ${tbl('Cycle 2–6',cycle2to6)}
+          ${tbl('Cycle 7–18',cycle7to18)}
+        `;
         box.style.display='block';
       }
     }
 
-    function handleFileSelect(e){ const f=e.target.files[0]; if(f) handleFile(f); document.getElementById('fileInput').value=''; }
-    function handleFile(file){ if(file.size>5*1024*1024){ showToast('ขนาดไฟล์ใหญ่เกินไป','ต้องไม่เกิน 5 MB','error'); return; } if(uploadFileType==='json') handleJsonFile(file); else handleExcelFile(file); }
-    function handleJsonFile(file){ const reader=new FileReader(); reader.onload=(e)=>{ try{ const data=JSON.parse(e.target.result); if(Array.isArray(data)) addRegimens(data);
-        else if(data['สูตรยาเคมีบำบัด']&&Array.isArray(data['สูตรยาเคมีบำบัด'])){ addRegimens(data['สูตรยาเคมีบำบัด']); }
-        else showToast('รูปแบบผิด','กรุณาตรวจไฟล์ JSON','error'); }catch{ showToast('อ่านไฟล์ไม่ได้','กรุณาตรวจ JSON','error'); } }; reader.readAsText(file); }
-    function handleExcelFile(file){ const reader=new FileReader(); reader.onload=(e)=>{ try{ const data=new Uint8Array(e.target.result); const wb=XLSX.read(data,{type:'array'}); const regimensSheet=wb.Sheets['Regimens']; const drugsSheet=wb.Sheets['Drugs']; if(!regimensSheet||!drugsSheet){ showToast('โครงสร้างไฟล์ไม่ถูกต้อง','ต้องมีแผ่นงาน Regimens และ Drugs','error'); return; } const regimensData=XLSX.utils.sheet_to_json(regimensSheet); const drugsData=XLSX.utils.sheet_to_json(drugsSheet); const newRegs=[]; regimensData.forEach(r=>{ if(!r['ชื่อสูตรยา']) return; const R={'ชื่อสูตรยา':r['ชื่อสูตรยา'],'ชนิดของมะเร็ง':r['ชนิดของมะเร็ง']||'','รอบการรักษา':r['รอบการรักษา']||'','รายการยา':[]}; drugsData.filter(d=>d['ชื่อสูตรยา']===r['ชื่อสูตรยา']).forEach(d=>{ if(d['ชื่อยา']&&d['ขนาดยา']) R['รายการยา'].push({'ชื่อยา':d['ชื่อยา'],'ขนาดยา':d['ขนาดยา'],'ความถี่ในการให้':d['ความถี่ในการให้']||'','maximum_dose':d['maximum_dose']||null}); }); if(R['รายการยา'].length>0) newRegs.push(R); }); if(newRegs.length>0){ addRegimens(newRegs); showToast('อัปโหลดสำเร็จ',`นำเข้าสูตรยา ${newRegs.length} สูตรจาก Excel`,'success'); } else showToast('ไม่พบสูตรยา','ตรวจข้อมูลในไฟล์ Excel','error'); }catch{ showToast('อ่านไฟล์ Excel ไม่สำเร็จ','กรุณาตรวจรูปแบบไฟล์','error'); } }; reader.readAsArrayBuffer(file); }
-    function addRegimens(newRegs){ const existing=regimens.map(r=>r['ชื่อสูตรยา']); const unique=newRegs.filter(r=>!existing.includes(r['ชื่อสูตรยา'])); regimens.push(...unique); localStorage.setItem('chemotherapyRegimens', JSON.stringify(regimens)); updateRegimenSelect(); displayUploadedRegimens(unique); updateRegimenCount(); }
-    function displayUploadedRegimens(list){ const wrap=document.getElementById('uploadedRegimens'); const box=document.getElementById('regimensList'); box.innerHTML=''; list.forEach(r=>{ const d=document.createElement('div'); d.className='card'; d.style.padding='1rem'; d.style.marginBottom='.75rem'; d.innerHTML=`<h4 style="color:#1e40af;margin-bottom:.25rem">${escapeHtml(r['ชื่อสูตรยา'])}</h4><div class="hint" style="margin-bottom:.5rem">${escapeHtml(r['ชนิดของมะเร็ง']||'')}</div><div><b>รอบการรักษา:</b> ${escapeHtml(r['รอบการรักษา']||'-')}</div><div style="margin-top:.5rem"><b>รายการยา:</b></div><ul style="margin-left:1rem">${r['รายการยา'].map(x=>`<li>${escapeHtml(x['ชื่อยา'])} — ${escapeHtml(x['ขนาดยา'])}</li>`).join('')}</ul>`; box.appendChild(d); }); wrap.style.display=list.length>0?'block':'none'; }
+    function handleFileSelect(e){
+      const f=e.target.files[0];
+      if(f) handleFile(f);
+      document.getElementById('fileInput').value='';
+    }
+
+    /* ==== อัปโหลดไฟล์: ตรวจจับชนิดจากนามสกุล + ตัวเลือกปุ่ม ==== */
+    function handleFile(file){
+      if(!file){
+        showToast('ไม่พบไฟล์','กรุณาเลือกไฟล์อีกครั้ง','error');
+        return;
+      }
+      if(file.size>5*1024*1024){
+        showToast('ขนาดไฟล์ใหญ่เกินไป','ต้องไม่เกิน 5 MB','error');
+        return;
+      }
+      const name = file.name || '';
+      const ext = name.split('.').pop().toLowerCase();
+      const isJson = ext === 'json';
+      const isExcel = ext === 'xlsx' || ext === 'xls';
+
+      if(isJson){
+        setUploadFileType('json');
+        handleJsonFile(file);
+      } else if(isExcel){
+        setUploadFileType('excel');
+        handleExcelFile(file);
+      } else if(uploadFileType==='json'){
+        handleJsonFile(file);
+      } else if(uploadFileType==='excel'){
+        handleExcelFile(file);
+      } else {
+        showToast('ชนิดไฟล์ไม่รองรับ','รองรับเฉพาะไฟล์ .json, .xlsx, .xls','error');
+      }
+    }
+
+    function handleJsonFile(file){
+      const reader=new FileReader();
+      reader.onload=(e)=>{
+        try{
+          const data=JSON.parse(e.target.result);
+          const before = regimens.length;
+
+          if(Array.isArray(data)){
+            addRegimens(data);
+          } else if(data['สูตรยาเคมีบำบัด'] && Array.isArray(data['สูตรยาเคมีบำบัด'])){
+            addRegimens(data['สูตรยาเคมีบำบัด']);
+          } else {
+            showToast('รูปแบบผิด','กรุณาตรวจโครงสร้างไฟล์ JSON','error');
+            return;
+          }
+
+          const added = regimens.length - before;
+          if(added>0){
+            showToast('อัปโหลดสำเร็จ',`นำเข้าสูตรยา ${added} สูตรจาก JSON`,'success');
+          } else {
+            showToast('ไม่มีสูตรยาใหม่','ชื่อสูตรยาอาจซ้ำกับที่มีอยู่แล้ว','warning');
+          }
+        }catch{
+          showToast('อ่านไฟล์ไม่ได้','กรุณาตรวจ JSON','error');
+        }
+      };
+      reader.readAsText(file,'utf-8');
+    }
+
+    function handleExcelFile(file){
+      const reader=new FileReader();
+      reader.onload=(e)=>{
+        try{
+          const data=new Uint8Array(e.target.result);
+          if(typeof XLSX === 'undefined'){
+            showToast('ไม่พบ XLSX library','ตรวจการเชื่อมต่อ CDN หรือไฟล์สคริปต์','error');
+            return;
+          }
+          const wb=XLSX.read(data,{type:'array'});
+          const regimensSheet=wb.Sheets['Regimens'];
+          const drugsSheet=wb.Sheets['Drugs'];
+
+          if(!regimensSheet||!drugsSheet){
+            showToast('โครงสร้างไฟล์ไม่ถูกต้อง','ต้องมีแผ่นงาน Regimens และ Drugs','error');
+            return;
+          }
+          const regimensData=XLSX.utils.sheet_to_json(regimensSheet);
+          const drugsData=XLSX.utils.sheet_to_json(drugsSheet);
+          const newRegs=[];
+
+          regimensData.forEach(r=>{
+            if(!r['ชื่อสูตรยา']) return;
+            const R={
+              'ชื่อสูตรยา':r['ชื่อสูตรยา'],
+              'ชนิดของมะเร็ง':r['ชนิดของมะเร็ง']||'',
+              'รอบการรักษา':r['รอบการรักษา']||'',
+              'รายการยา':[]
+            };
+            drugsData
+              .filter(d=>d['ชื่อสูตรยา']===r['ชื่อสูตรยา'])
+              .forEach(d=>{
+                if(d['ชื่อยา']&&d['ขนาดยา']){
+                  R['รายการยา'].push({
+                    'ชื่อยา':d['ชื่อยา'],
+                    'ขนาดยา':d['ขนาดยา'],
+                    'ความถี่ในการให้':d['ความถี่ในการให้']||'',
+                    'maximum_dose':d['maximum_dose']||null
+                  });
+                }
+              });
+            if(R['รายการยา'].length>0) newRegs.push(R);
+          });
+
+          if(newRegs.length>0){
+            const before = regimens.length;
+            addRegimens(newRegs);
+            const added = regimens.length - before;
+            showToast('อัปโหลดสำเร็จ',`นำเข้าสูตรยา ${added} สูตรจาก Excel`,'success');
+          } else {
+            showToast('ไม่พบสูตรยา','ตรวจข้อมูลในไฟล์ Excel (ชื่อคอลัมน์และชื่อสูตรยา)','error');
+          }
+        }catch{
+          showToast('อ่านไฟล์ Excel ไม่สำเร็จ','กรุณาตรวจรูปแบบไฟล์','error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function addRegimens(newRegs){
+      const existing=regimens.map(r=>r['ชื่อสูตรยา']);
+      const unique=newRegs.filter(r=>!existing.includes(r['ชื่อสูตรยา']));
+      regimens.push(...unique);
+      localStorage.setItem('chemotherapyRegimens', JSON.stringify(regimens));
+      updateRegimenSelect();
+      displayUploadedRegimens(unique);
+      updateRegimenCount();
+    }
+
+    function displayUploadedRegimens(list){
+      const wrap=document.getElementById('uploadedRegimens');
+      const box=document.getElementById('regimensList');
+      box.innerHTML='';
+      list.forEach(r=>{
+        const d=document.createElement('div');
+        d.className='card';
+        d.style.padding='1rem';
+        d.style.marginBottom='.75rem';
+        d.innerHTML=`
+          <h4 style="color:#1e40af;margin-bottom:.25rem">${escapeHtml(r['ชื่อสูตรยา'])}</h4>
+          <div class="hint" style="margin-bottom:.5rem">${escapeHtml(r['ชนิดของมะเร็ง']||'')}</div>
+          <div><b>รอบการรักษา:</b> ${escapeHtml(r['รอบการรักษา']||'-')}</div>
+          <div style="margin-top:.5rem"><b>รายการยา:</b></div>
+          <ul style="margin-left:1rem">
+            ${r['รายการยา'].map(x=>`<li>${escapeHtml(x['ชื่อยา'])} — ${escapeHtml(x['ขนาดยา'])}</li>`).join('')}
+          </ul>`;
+        box.appendChild(d);
+      });
+      wrap.style.display=list.length>0?'block':'none';
+    }
 
     function saveSettings(){
       settings.useBsaLimit=document.getElementById('useBsaLimit').checked;
@@ -954,34 +1355,83 @@
     function toggleTheme(){
       const sw=document.getElementById('themeSwitch');
       const dark=document.documentElement.getAttribute('data-theme')==='dark';
-      if(dark){ document.documentElement.setAttribute('data-theme','light'); sw.classList.remove('active'); localStorage.setItem('theme','light'); }
-      else{ document.documentElement.setAttribute('data-theme','dark'); sw.classList.add('active'); localStorage.setItem('theme','dark'); }
+      if(dark){
+        document.documentElement.setAttribute('data-theme','light');
+        sw.classList.remove('active');
+        localStorage.setItem('theme','light');
+      } else {
+        document.documentElement.setAttribute('data-theme','dark');
+        sw.classList.add('active');
+        localStorage.setItem('theme','dark');
+      }
     }
 
-    function printResults(){ if(document.getElementById('results').style.display==='none'){ showToast('ไม่มีผลลัพธ์','กรุณาคำนวณก่อนพิมพ์','error'); return; } window.print(); }
+    function printResults(){
+      if(document.getElementById('results').style.display==='none'){
+        showToast('ไม่มีผลลัพธ์','กรุณาคำนวณก่อนพิมพ์','error');
+        return;
+      }
+      window.print();
+    }
     function exportResults(){
-      if(!lastResults){ showToast('ไม่มีผลลัพธ์','กรุณาคำนวณก่อนส่งออก','error'); return; }
+      if(!lastResults){
+        showToast('ไม่มีผลลัพธ์','กรุณาคำนวณก่อนส่งออก','error');
+        return;
+      }
       try{
+        if(typeof XLSX === 'undefined'){
+          showToast('ไม่พบ XLSX library','ตรวจการเชื่อมต่อ CDN หรือไฟล์สคริปต์','error');
+          return;
+        }
         const wb=XLSX.utils.book_new();
-        const meta=[{หัวข้อ:'Regimen',ค่า:lastResults.regimen['ชื่อสูตรยา']},{หัวข้อ:'ชนิดมะเร็ง',ค่า:lastResults.regimen['ชนิดของมะเร็ง']},{หัวข้อ:'BSA (จริง/ใช้)',ค่า:`${lastResults.bsa.toFixed(2)} / ${lastResults.bsaUsed.toFixed(2)} m²`},{หัวข้อ:'CrCl (จริง/ใช้)',ค่า:`${lastResults.crcl?lastResults.crcl.toFixed(2):'-'} / ${lastResults.crclUsed?lastResults.crclUsed.toFixed(2):'-'} mL/min`}];
-        const s1=XLSX.utils.json_to_sheet(meta); XLSX.utils.book_append_sheet(wb,s1,'Summary');
-        const rows=lastResults.rows.map(r=>({Drug:r.drugName,Order:r.order,Calculated_mg:r.calcMg,Final_mg:r.finalMg,Achieved_Unit:r.unitAchieved,Max:r.maxDose,Details:r.details,Note:r.note||''}));
-        const s2=XLSX.utils.json_to_sheet(rows); XLSX.utils.book_append_sheet(wb,s2,'Details');
-        XLSX.writeFile(wb,'chemo_dose_results.xlsx'); showToast('ส่งออกสำเร็จ','บันทึกผลลัพธ์เป็น Excel เรียบร้อย','success');
-      }catch{ showToast('ส่งออกไม่สำเร็จ','เกิดข้อผิดพลาดในการสร้างไฟล์','error'); }
+        const meta=[
+          {หัวข้อ:'Regimen',ค่า:lastResults.regimen['ชื่อสูตรยา']},
+          {หัวข้อ:'ชนิดมะเร็ง',ค่า:lastResults.regimen['ชนิดของมะเร็ง']},
+          {หัวข้อ:'BSA (จริง/ใช้)',ค่า:`${lastResults.bsa.toFixed(2)} / ${lastResults.bsaUsed.toFixed(2)} m²`},
+          {หัวข้อ:'CrCl (จริง/ใช้)',ค่า:`${lastResults.crcl?lastResults.crcl.toFixed(2):'-'} / ${lastResults.crclUsed?lastResults.crclUsed.toFixed(2):'-'} mL/min`}
+        ];
+        const s1=XLSX.utils.json_to_sheet(meta);
+        XLSX.utils.book_append_sheet(wb,s1,'Summary');
+
+        const rows=lastResults.rows.map(r=>({
+          Drug:r.drugName,
+          Order:r.order,
+          Calculated_mg:r.calcMg,
+          Final_mg:r.finalMg,
+          Achieved_Unit:r.unitAchieved,
+          Max:r.maxDose,
+          Details:r.details,
+          Note:r.note||''
+        }));
+        const s2=XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb,s2,'Details');
+
+        XLSX.writeFile(wb,'chemo_dose_results.xlsx');
+        showToast('ส่งออกสำเร็จ','บันทึกผลลัพธ์เป็น Excel เรียบร้อย','success');
+      }catch{
+        showToast('ส่งออกไม่สำเร็จ','เกิดข้อผิดพลาดในการสร้างไฟล์','error');
+      }
     }
 
     /* --------- Netlify-ready: โหลด regimens.json อัตโนมัติ --------- */
     async function loadExternalRegimens(){
-      const candidates = ['./regimens.json','./data/regimens.json','/regimens.json','/data/regimens.json'];
+      const candidates = ['./regimens_validated.json','./regimens.json','./data/regimens.json','/regimens.json','/data/regimens.json'];
       for(const url of candidates){
         try{
           const res = await fetch(url, {cache:'no-store'});
           if(!res.ok) continue;
           const data = await res.json();
-          if(Array.isArray(data)) { addRegimens(data); return true; }
-          if(data && Array.isArray(data['สูตรยาเคมีบำบัด'])) { addRegimens(data['สูตรยาเคมีบำบัด']); return true; }
-        }catch{ /* ignore and try next */ }
+          if(Array.isArray(data)) {
+            addRegimens(data);
+            return true;
+          }
+          if(data && Array.isArray(data['สูตรยาเคมีบำบัด'])) {
+            addRegimens(data['สูตรยาเคมีบำบัด']);
+            return true;
+          }
+        }catch{
+          // ignore and try next
+        }
       }
       return false;
     }
@@ -989,8 +1439,25 @@
     function getNum(id){ return (document.getElementById(id).value||'').trim(); }
     function g(id){ return document.getElementById(id).value; }
     function setText(id,txt){ const el=document.getElementById(id); if(el) el.textContent=txt; }
-    function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-    function showToast(title,desc,type='info'){ const wrap=document.getElementById('toastContainer'); const t=document.createElement('div'); t.className=`toast ${type}`; t.innerHTML=`<div class="toast-title">${escapeHtml(title)}</div><div class="toast-desc">${escapeHtml(desc)}</div>`; wrap.appendChild(t); setTimeout(()=>t.classList.add('show'),10); setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),250); },4000); }
+    function escapeHtml(s){
+      return String(s??'').replace(/[&<>"']/g, m=>({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[m]));
+    }
+    function showToast(title,desc,type='info'){
+      const wrap=document.getElementById('toastContainer');
+      const t=document.createElement('div');
+      t.className=`toast ${type}`;
+      t.innerHTML=`
+        <div class="toast-title">${escapeHtml(title)}</div>
+        <div class="toast-desc">${escapeHtml(desc)}</div>`;
+      wrap.appendChild(t);
+      setTimeout(()=>t.classList.add('show'),10);
+      setTimeout(()=>{
+        t.classList.remove('show');
+        setTimeout(()=>t.remove(),250);
+      },4000);
+    }
 
     function seedSample(){
       regimens=[
@@ -1010,7 +1477,7 @@
       localStorage.setItem('chemotherapyRegimens', JSON.stringify(regimens));
     }
 
-    /* ตัวช่วยโหลดเทมเพลตอย่างง่าย (optional) */
+    /* ตัวช่วยโหลดเทมเพลต JSON */
     function downloadJSONTemplate(){
       const tpl = {
         "สูตรยาเคมีบำบัด":[
@@ -1025,32 +1492,44 @@
         ]
       };
       const blob = new Blob([JSON.stringify(tpl,null,2)], {type:'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='regimens.json'; a.click(); URL.revokeObjectURL(a.href);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download='regimens.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
     }
+
+    /* ตัวช่วยโหลดเทมเพลต Excel จากไฟล์ chemo_regimens_template.xlsx ในโฟลเดอร์เดียวกัน */
     function downloadExcelTemplate(){
-      showToast('คำแนะนำ','ขณะนี้มีตัวอย่าง JSON พร้อมใช้งาน หากต้องการ Excel ให้เตรียมชีต Regimens และ Drugs ตามคู่มือ', 'success');
+      const a = document.createElement('a');
+      a.href = './chemo_regimens_template.xlsx';
+      a.download = 'chemo_regimens_template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   </script>
-</script>
-<img
-  src="https://lh5.googleusercontent.com/d/16RI1EceAxvgTLYE2VMztXEqDzDmqhIru" alt="Gemini Generated Image 46tguk46tguk46tg
-"
-  alt="badge"
-  loading="lazy"
-  decoding="async"
-  style="
-    position: fixed;
-    right: 16px;
-    bottom: calc(16px + env(safe-area-inset-bottom));
-    width: clamp(50px, 8vw, 90px);
-    height: auto;
-    border: 0;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,.18);
-    object-fit: contain;
-    pointer-events: none;
-    z-index: 9999;
-  "
->
+
+  <img
+    src="https://lh5.googleusercontent.com/d/16RI1EceAxvgTLYE2VMztXEqDzDmqhIru"
+    alt="Chemotherapy calculator badge"
+    loading="lazy"
+    decoding="async"
+    style="
+      position: fixed;
+      right: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      width: clamp(50px, 8vw, 90px);
+      height: auto;
+      border: 0;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.18);
+      object-fit: contain;
+      pointer-events: none;
+      z-index: 9999;
+    "
+  >
 </body>
 </html>
