@@ -290,7 +290,7 @@
             <!-- Regimen & Results -->
             <div class="card" aria-label="เลือกสูตรยาและผลลัพธ์">
               <div class="section-header">
-                <h3 class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-12V7l-10-5z"/></svg>สูตรยา & ผลการคำนวณ</h3>
+                <h3 class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>สูตรยา & ผลการคำนวณ</h3>
                 <p class="section-desc">เลือกสูตรยาที่ต้องการคำนวณขนาดยา</p>
               </div>
               <div class="section-body">
@@ -486,19 +486,20 @@
     let debounceTimer;
     let tableViewListenerAttached = false;
 
-    /* --------- GitHub raw candidates for templates (อัปเดตให้ตรง repo) --------- */
+    /* --------- GitHub raw candidates for templates (อัปเดตชื่อไฟล์ให้ตรง repo) --------- */
     const JSON_TEMPLATE_CANDIDATES = [
-      // ตรงกับไฟล์จริงใน root ของ repo
       'https://raw.githubusercontent.com/JuiPharm/Chemotherapy_Calculator/main/regimens.json',
-      // CDN สำรอง
-      'https://cdn.jsdelivr.net/gh/JuiPharm/Chemotherapy_Calculator@main/regimens.json'
+      'https://raw.githubusercontent.com/JuiPharm/Chemotherapy_Calculator/main/regimens_validated.json',
+      'https://raw.githubusercontent.com/JuiPharm/Chemotherapy_Calculator/main/templates/regimens.json',
+      'https://raw.githubusercontent.com/JuiPharm/Chemotherapy_Calculator/main/data/regimens.json'
     ];
-
     const XLSX_TEMPLATE_CANDIDATES = [
-      // ตรงกับไฟล์จริงใน root ของ repo
       'https://raw.githubusercontent.com/JuiPharm/Chemotherapy_Calculator/main/chemo_regimens_template.xlsx',
-      // CDN สำรอง
-      'https://cdn.jsdelivr.net/gh/JuiPharm/Chemotherapy_Calculator@main/chemo_regimens_template.xlsx'
+      'https://cdn.jsdelivr.net/gh/JuiPharm/Chemotherapy_Calculator@main/chemo_regimens_template.xlsx',
+      'https://raw.githubusercontent.com/JuiPharm/Chemotherapy_Calculator/main/templates/chemo_regimens_template.xlsx',
+      'https://raw.githubusercontent.com/JuiPharm/Chemotherapy_Calculator/main/data/chemo_regimens_template.xlsx',
+      'https://cdn.jsdelivr.net/gh/JuiPharm/Chemotherapy_Calculator@main/templates/chemo_regimens_template.xlsx',
+      'https://cdn.jsdelivr.net/gh/JuiPharm/Chemotherapy_Calculator@main/data/chemo_regimens_template.xlsx'
     ];
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1003,14 +1004,14 @@
       localStorage.setItem('chemotherapyRegimens', JSON.stringify(regimens));
     }
 
-    /* ---------- Templates download from GitHub ---------- */
+    /* ---------- Templates download from GitHub (อัปเดต) ---------- */
     async function downloadJSONTemplate(){
       const tryFetch = async (url) => {
-        const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
+        const res = await fetch(url, { mode: 'cors', cache: 'no-store', credentials: 'omit' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const text = await res.text();
         const trimmed = text.trim();
-        if (trimmed.length < 10 || (!trimmed.startsWith('{') && !trimmed.startsWith('['))) {
+        if (trimmed.length < 2 || (!trimmed.startsWith('{') && !trimmed.startsWith('['))) {
           throw new Error('Invalid JSON content');
         }
         return new Blob([text], { type: 'application/json' });
@@ -1027,14 +1028,14 @@
           a.remove();
           showToast('ดาวน์โหลดสำเร็จ','บันทึก regimens.json จาก GitHub แล้ว','success');
           return;
-        } catch (e) { console.warn('JSON template fallback failed:', e); }
+        } catch (e) { console.warn('JSON template fallback failed:', url, e); }
       }
       showToast('ไม่พบ regimens.json บน GitHub','โปรดตรวจ path ใน repo หรืออัปเดต JSON_TEMPLATE_CANDIDATES', 'error');
     }
 
     async function downloadExcelTemplate(){
       const tryFetchBlob = async (url) => {
-        const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
+        const res = await fetch(url, { mode: 'cors', cache: 'no-store', credentials: 'omit' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const blob = await res.blob();
         if (!blob || blob.size < 1024) throw new Error('Blob too small');
@@ -1054,8 +1055,7 @@
           return;
         } catch (e) { console.warn('XLSX template fallback failed:', url, e); }
       }
-
-      // สุดท้าย: สร้างไฟล์เทมเพลตสำรองให้อัตโนมัติ
+      // โหมดสำรอง: สร้างไฟล์ให้เองถ้าหาไม่พบจริง ๆ
       try{
         const wb = XLSX.utils.book_new();
         const regimensSheet = XLSX.utils.json_to_sheet([
