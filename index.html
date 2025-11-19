@@ -3,16 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-
-  <title>ChemoCal</title>
-  <!-- Favicon (ไฟล์อยู่โฟลเดอร์เดียวกับ index.html) -->
-  <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="shortcut icon" href="favicon.ico" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-  <meta name="apple-mobile-web-app-title" content="ChemoCal" />
-  <link rel="manifest" href="site.webmanifest" />
-
+  <title>ระบบคำนวณขนาดยาเคมีบำบัด - Chemotherapy Dosage Calculator</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root{
@@ -55,7 +46,6 @@
       --thead:#0b1220;
       --row-alt:#1f2937;
     }
-
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
     body{
@@ -64,7 +54,6 @@
       font-size:var(--font-size-base);
     }
     .container{max-width:1280px;margin:0 auto}
-
     .header{display:flex;align-items:center;justify-content:space-between;gap:var(--spacing-sm);margin-bottom:var(--spacing-md);flex-wrap:wrap}
     .brand{display:flex;align-items:center;gap:var(--spacing-sm)}
     .logo{width:3rem;height:3rem;border-radius:.9rem;background:linear-gradient(135deg,var(--primary),var(--secondary));display:grid;place-items:center;color:#fff;box-shadow:var(--shadow)}
@@ -72,14 +61,12 @@
     .title{font-weight:800;font-size:clamp(1.125rem,2.2vw,1.75rem);background:linear-gradient(90deg,#1e40af,#6b21a8);-webkit-background-clip:text;background-clip:text;color:transparent}
     :root[data-theme="dark"] .title{background:linear-gradient(90deg,#93c5fd,#d8b4fe);-webkit-background-clip:text;background-clip:text;color:transparent}
     .subtitle{font-size:.875rem;color:var(--muted)}
-
     .header-actions{display:flex;align-items:center;gap:var(--spacing-sm);flex-wrap:wrap}
     .toggle{display:inline-flex;align-items:center;gap:var(--spacing-sm)}
     .switch{position:relative;width:52px;height:30px;background:#e5e7eb;border-radius:999px;cursor:pointer;transition:.2s;border:1px solid var(--border)}
     :root[data-theme="dark"] .switch{background:#111827;border-color:#374151}
     .knob{position:absolute;top:3px;left:3px;width:24px;height:24px;background:#fff;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.2s}
     .switch.active .knob{left:25px}
-
     .tab-bar{display:flex;background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;margin-bottom:var(--spacing-md)}
     .tab-bar button{flex:1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:var(--spacing-md);border:none;background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:.15s}
     .tab-bar button:hover{background:var(--soft)}
@@ -87,7 +74,6 @@
     :root[data-theme="dark"] .tab-bar button.active{background:#0b1220;color:#e5e7eb;border-bottom-color:var(--primary)}
     .tab-bar svg{width:20px;height:20px}
     @media (max-width:768px){.tab-bar{flex-direction:column}}
-
     .main{display:flex;flex-direction:column;gap:var(--spacing-md)}
     .card{background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border)}
     .section-header{padding:var(--spacing-md) calc(var(--spacing-md) + var(--spacing-sm));border-bottom:1px solid var(--border)}
@@ -95,11 +81,9 @@
     .section-title svg{width:22px;height:22px}
     .section-desc{color:var(--muted);font-size:.925rem;margin-top:.25rem}
     .section-body{padding:var(--spacing-md) calc(var(--spacing-md) + var(--spacing-sm))}
-
     .grid{display:grid;gap:var(--spacing-md)}
     .grid-13{grid-template-columns:1fr 1.25fr}
     @media (max-width:1024px){.grid-13{grid-template-columns:1fr}}
-
     .form-group{margin-bottom:var(--spacing-md)}
     label{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.4rem;color:var(--text);font-weight:700;font-size:.95rem}
     .hint{font-weight:500;color:var(--muted);font-size:.8rem}
@@ -112,7 +96,6 @@
     .inline{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
     .input-group{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
     .input-group select{max-width:90px;flex-shrink:0}
-
     .btn{display:inline-flex;align-items:center;gap:.5rem;border:none;border-radius:12px;padding:.75rem 1rem;font-weight:800;cursor:pointer;transition:.2s;min-height:44px;justify-content:center}
     .btn svg{width:18px;height:18px}
     .btn:disabled{opacity:.6;cursor:not-allowed}
@@ -126,7 +109,6 @@
     .btn-warning:hover{filter:brightness(.95)}
     .btn-block{width:100%}
     .actions-bar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
-
     .table-wrap{border:1px solid var(--border);border-radius:12px;overflow:auto;background:var(--panel)}
     table{width:100%;border-collapse:collapse}
     th,td{padding:.75rem;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
@@ -137,24 +119,19 @@
     :root[data-theme="dark"] tbody tr:hover{background:#374151 !important}
     .dose-highlight{font-weight:800;color:var(--primary);background:rgba(37,99,235,.08);padding:.25rem .5rem;border-radius:6px}
     .note-highlight{background:var(--amber);color:var(--text);padding:.25rem;border-radius:6px;margin-top:.25rem;display:block}
-
     .upload-area{border:2px dashed var(--border);border-radius:12px;padding:2rem;text-align:center;transition:all .2s ease;cursor:pointer;background:var(--soft-2)}
     .upload-area:hover{border-color:#6366f1}
     .upload-area.dragover{border-color:var(--green);background:#ecfdf5}
-
     .calculated-values{margin-top:1rem;padding:1rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px}
     :root[data-theme="dark"] .calculated-values{background:#062e1a;border-color:#14532d}
     .calculated-values h4{font-weight:800;color:#065f46;margin-bottom:.5rem}
     .calc-val{display:flex;justify-content:space-between;margin-bottom:.25rem;font-size:.95rem}
     .calc-val b{color:#047857}
     .calc-val span{font-family:monospace;font-weight:800}
-
     .cycle-summary{margin-top:1rem;padding:1rem;background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px}
     :root[data-theme="dark"] .cycle-summary{background:#0b1220;border-color:#1f2937}
-
     .preview-card{background:var(--soft-2);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem}
     .preview-title{font-weight:700;margin-bottom:.5rem;color:var(--primary)}
-
     .toast-wrap{position:fixed;bottom:.5rem;right:.5rem;z-index:1000;display:grid;gap:.5rem;max-width:320px}
     .toast{background:var(--panel);border-left:4px solid var(--primary);padding:1rem;border-radius:12px;box-shadow:var(--shadow);transform:translateX(120%);transition:transform .25s;border:1px solid var(--border)}
     .toast.show{transform:translateX(0)}
@@ -162,7 +139,6 @@
     .toast-desc{color:var(--text);font-size:.9rem}
     .toast.error{border-left-color:var(--red)}
     .toast.success{border-left-color:var(--green)}
-
     .adv-wrap{background:var(--soft);border-radius:12px;border:1px solid var(--border)}
     .adv-inner{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem}
     .opt-row{display:flex;align-items:center;gap:.75rem;margin:.5rem 0}
@@ -170,8 +146,6 @@
     .opt-num{width:140px}
     .unit{color:var(--muted)}
     .adv-note{font-size:.9rem;color:var(--muted);margin-top:.25rem}
-
-    /* ---------- FIX: Template card contrast (Light/Dark) ---------- */
     .template-info{
       background:linear-gradient(135deg,#eff6ff,#f3e8ff);
       border:2px solid #bfdbfe;
@@ -189,7 +163,6 @@
     :root[data-theme="dark"] .template-info h3{
       color:var(--text) !important;
     }
-
     @page{size:A4;margin:12mm 12mm 14mm 12mm}
     @media print{
       body{padding:0;background:#fff;color:#000}
@@ -202,7 +175,6 @@
       .dose-highlight{background:#e6f0ff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
       .note-highlight{background:#fde68a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     }
-
     @media (max-width:768px){
       .section-header,.section-body{padding:var(--spacing-sm)}
       .grid,.grid-13{grid-template-columns:1fr;gap:var(--spacing-sm)}
@@ -417,7 +389,6 @@
               </div>
             </div>
 
-            <!-- ลบ onclick เดิมออก เพื่อไม่ให้ยิงอีเวนต์ซ้ำ -->
             <div class="upload-area" id="dropZone" role="button" tabindex="0" aria-label="อัปโหลดไฟล์">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;margin:0 auto 1rem;color:#6b7280"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <h3>อัปโหลดไฟล์ <span id="fileTypeText">Excel</span></h3>
@@ -515,18 +486,27 @@
     let debounceTimer;
     let tableViewListenerAttached = false;
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // Default เป็น Dark Mode
-      const theme = localStorage.getItem('theme') || 'dark';
-      const isDark = theme === 'dark';
-      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      const sw = document.getElementById('themeSwitch');
-      sw.classList.toggle('active', isDark);
-      sw.setAttribute('aria-checked', String(isDark));
+    /* --------- GitHub raw candidates for templates (อัปเดตให้ตรง repo) --------- */
+    const JSON_TEMPLATE_CANDIDATES = [
+      // ตรงกับไฟล์จริงใน root ของ repo
+      'https://raw.githubusercontent.com/JuiPharm/Chemotherapy_Calculator/main/regimens.json',
+      // CDN สำรอง
+      'https://cdn.jsdelivr.net/gh/JuiPharm/Chemotherapy_Calculator@main/regimens.json'
+    ];
 
+    const XLSX_TEMPLATE_CANDIDATES = [
+      // ตรงกับไฟล์จริงใน root ของ repo
+      'https://raw.githubusercontent.com/JuiPharm/Chemotherapy_Calculator/main/chemo_regimens_template.xlsx',
+      // CDN สำรอง
+      'https://cdn.jsdelivr.net/gh/JuiPharm/Chemotherapy_Calculator@main/chemo_regimens_template.xlsx'
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const theme = localStorage.getItem('theme') || 'light';
+      if(theme==='dark'){ document.documentElement.setAttribute('data-theme','dark'); document.getElementById('themeSwitch').classList.add('active'); }
       loadData();
       setupEventListeners();
-      setUploadFileType('excel'); // UI อย่างเดียว (ไม่ไปเปลี่ยน accept)
+      setUploadFileType('excel');
       updatePreview();
     });
 
@@ -596,9 +576,6 @@
         const el=document.getElementById(id);
         el.addEventListener('change',()=>toggleOptionInputs());
       });
-
-      // ให้เลือกได้ทุกชนิดเสมอ
-      document.getElementById('fileInput').setAttribute('accept','.xlsx,.xls,.json');
     }
     function debounce(fn,d){ return (...a)=>{ clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>fn.apply(this,a),d); }; }
 
@@ -675,18 +652,11 @@
       'CNS','Sarcoma','Melanoma','Other / Unspecified'
     ];
 
-    // --- FIX: setUploadFileType เป็น UI อย่างเดียว ไม่เปลี่ยน accept ของ input แล้ว ---
     function setUploadFileType(type){
       uploadFileType=type;
       const jsonBtn=document.getElementById('jsonBtn'); const excelBtn=document.getElementById('excelBtn');
-      if(type==='json'){
-        jsonBtn.className='btn btn-primary'; excelBtn.className='btn btn-muted';
-        setText('fileTypeText','JSON'); setText('fileTypeBtnText','JSON'); setText('fileTypeInfo','JSON (.json)');
-      }else{
-        jsonBtn.className='btn btn-muted'; excelBtn.className='btn btn-primary';
-        setText('fileTypeText','Excel'); setText('fileTypeBtnText','Excel'); setText('fileTypeInfo','Excel (.xlsx, .xls)');
-      }
-      // ไม่แตะต้อง accept ของ #fileInput อีกต่อไป
+      if(type==='json'){ jsonBtn.className='btn btn-primary'; excelBtn.className='btn btn-muted'; setText('fileTypeText','JSON'); setText('fileTypeBtnText','JSON'); setText('fileTypeInfo','JSON (.json)'); document.getElementById('fileInput').accept='.json'; }
+      else{ jsonBtn.className='btn btn-muted'; excelBtn.className='btn btn-primary'; setText('fileTypeText','Excel'); setText('fileTypeBtnText','Excel'); setText('fileTypeInfo','Excel (.xlsx, .xls)'); document.getElementById('fileInput').accept='.xlsx,.xls'; }
     }
 
     function updateRegimenSelect(){
@@ -742,7 +712,6 @@
       else{ box.style.display='none'; }
     }
 
-    /* ===== RESET ===== */
     function resetPatientData(){
       ['weight','height','age','serumCreatinine'].forEach(id=>setVal(id,''));
       setVal('weightUnit','kg'); setVal('heightUnit','cm'); setVal('gender','male');
@@ -925,98 +894,20 @@
       }
     }
 
-    // --- FIX: ตรวจชนิดไฟล์อัตโนมัติ + รีเซ็ตค่าอย่างถูกต้อง ---
-    function handleFileSelect(e){
-      const input = e.target;
-      const f = (input.files && input.files[0]) || null;
-      if(!f) return;
-      handleFile(f);
-      // เคลียร์ค่าหลัง FileReader ทำงานตั้งคิวแล้ว
-      setTimeout(()=>{ input.value=''; }, 0);
-    }
-
-    function getFileKind(file){
-      const name = (file.name || '').toLowerCase();
-      const type = (file.type || '').toLowerCase();
-      if (name.endsWith('.json') || type.includes('json')) return 'json';
-      if (name.endsWith('.xlsx') || name.endsWith('.xls') || type.includes('sheet') || type.includes('excel')) return 'excel';
-      return uploadFileType; // เผื่อเดาไม่ได้ ใช้ค่าที่เลือกใน UI
-    }
-
-    function handleFile(file){
-      if(file.size>5*1024*1024){ showToast('ขนาดไฟล์ใหญ่เกินไป','ต้องไม่เกิน 5 MB','error'); return; }
-      const kind = getFileKind(file);
-      if(kind==='json') handleJsonFile(file);
-      else if(kind==='excel') handleExcelFile(file);
-      else showToast('ไม่รู้จักชนิดไฟล์','รองรับ .xlsx, .xls, .json เท่านั้น','error');
-    }
-
-    function handleJsonFile(file){
-      const reader=new FileReader();
-      reader.onload=(e)=>{
-        try{
-          const data=JSON.parse(e.target.result);
-          if(Array.isArray(data)) addRegimens(data);
-          else if(data['สูตรยาเคมีบำบัด']&&Array.isArray(data['สูตรยาเคมีบำบัด'])){ addRegimens(data['สูตรยาเคมีบำบัด']); }
-          else showToast('รูปแบบผิด','กรุณาตรวจไฟล์ JSON','error');
-        }catch{ showToast('อ่านไฟล์ไม่ได้','กรุณาตรวจ JSON','error'); }
-      };
-      reader.readAsText(file);
-    }
-
-    function handleExcelFile(file){
-      const reader=new FileReader();
-      reader.onload=(e)=>{
-        try{
-          const data=new Uint8Array(e.target.result);
-          const wb=XLSX.read(data,{type:'array'});
-          const regimensSheet=wb.Sheets['Regimens']; const drugsSheet=wb.Sheets['Drugs'];
-          if(!regimensSheet||!drugsSheet){ showToast('โครงสร้างไฟล์ไม่ถูกต้อง','ต้องมีแผ่นงาน Regimens และ Drugs','error'); return; }
-          const regimensData=XLSX.utils.sheet_to_json(regimensSheet);
-          const drugsData=XLSX.utils.sheet_to_json(drugsSheet);
-          const newRegs=[];
-          regimensData.forEach(r=>{
-            if(!r['ชื่อสูตรยา']) return;
-            const R={'ชื่อสูตรยา':r['ชื่อสูตรยา'],'ชนิดของมะเร็ง':r['ชนิดของมะเร็ง']||'','รอบการรักษา':r['รอบการรักษา']||'','รายการยา':[]};
-            drugsData.filter(d=>d['ชื่อสูตรยา']===r['ชื่อสูตรยา']).forEach(d=>{
-              if(d['ชื่อยา']&&d['ขนาดยา']) R['รายการยา'].push({'ชื่อยา':d['ชื่อยา'],'ขนาดยา':d['ขนาดยา'],'ความถี่ในการให้':d['ความถี่ในการให้']||'','maximum_dose':d['maximum_dose']||null});
-            });
-            if(R['รายการยา'].length>0) newRegs.push(R);
-          });
-          if(newRegs.length>0){ addRegimens(newRegs); showToast('อัปโหลดสำเร็จ',`นำเข้าสูตรยา ${newRegs.length} สูตรจาก Excel`,'success'); }
-          else showToast('ไม่พบสูตรยา','ตรวจข้อมูลในไฟล์ Excel','error');
-        }catch{ showToast('อ่านไฟล์ Excel ไม่สำเร็จ','กรุณาตรวจรูปแบบไฟล์','error'); }
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
-    function addRegimens(newRegs){
-      const existing=regimens.map(r=>r['ชื่อสูตรยา']);
-      const unique=newRegs.filter(r=>!existing.includes(r['ชื่อสูตรยา']));
-      regimens.push(...unique);
-      localStorage.setItem('chemotherapyRegimens', JSON.stringify(regimens));
-      updateRegimenSelect();
-      displayUploadedRegimens(unique);
-      updateRegimenCount();
-    }
-
-    function displayUploadedRegimens(list){
-      const wrap=document.getElementById('uploadedRegimens');
-      const box=document.getElementById('regimensList'); box.innerHTML='';
-      list.forEach(r=>{
-        const d=document.createElement('div');
-        d.className='card'; d.style.padding='1rem'; d.style.marginBottom='.75rem';
-        d.innerHTML=`<h4 style="color:#1e40af;margin-bottom:.25rem">${escapeHtml(r['ชื่อสูตรยา'])}</h4><div class="hint" style="margin-bottom:.5rem">${escapeHtml(r['ชนิดของมะเร็ง']||'')}</div><div><b>รอบการรักษา:</b> ${escapeHtml(r['รอบการรักษา']||'-')}</div><div style="margin-top:.5rem"><b>รายการยา:</b></div><ul style="margin-left:1rem">${r['รายการยา'].map(x=>`<li>${escapeHtml(x['ชื่อยา'])} — ${escapeHtml(x['ขนาดยา'])}</li>`).join('')}</ul>`;
-        box.appendChild(d);
-      });
-      wrap.style.display=list.length>0?'block':'none';
-    }
+    function handleFileSelect(e){ const f=e.target.files[0]; if(f) handleFile(f); document.getElementById('fileInput').value=''; }
+    function handleFile(file){ if(file.size>5*1024*1024){ showToast('ขนาดไฟล์ใหญ่เกินไป','ต้องไม่เกิน 5 MB','error'); return; } if(uploadFileType==='json') handleJsonFile(file); else handleExcelFile(file); }
+    function handleJsonFile(file){ const reader=new FileReader(); reader.onload=(e)=>{ try{ const data=JSON.parse(e.target.result); if(Array.isArray(data)) addRegimens(data);
+        else if(data['สูตรยาเคมีบำบัด']&&Array.isArray(data['สูตรยาเคมีบำบัด'])){ addRegimens(data['สูตรยาเคมีบำบัด']); }
+        else showToast('รูปแบบผิด','กรุณาตรวจไฟล์ JSON','error'); }catch{ showToast('อ่านไฟล์ไม่ได้','กรุณาตรวจ JSON','error'); } }; reader.readAsText(file); }
+    function handleExcelFile(file){ const reader=new FileReader(); reader.onload=(e)=>{ try{ const data=new Uint8Array(e.target.result); const wb=XLSX.read(data,{type:'array'}); const regimensSheet=wb.Sheets['Regimens']; const drugsSheet=wb.Sheets['Drugs']; if(!regimensSheet||!drugsSheet){ showToast('โครงสร้างไฟล์ไม่ถูกต้อง','ต้องมีแผ่นงาน Regimens และ Drugs','error'); return; } const regimensData=XLSX.utils.sheet_to_json(regimensSheet); const drugsData=XLSX.utils.sheet_to_json(drugsSheet); const newRegs=[]; regimensData.forEach(r=>{ if(!r['ชื่อสูตรยา']) return; const R={'ชื่อสูตรยา':r['ชื่อสูตรยา'],'ชนิดของมะเร็ง':r['ชนิดของมะเร็ง']||'','รอบการรักษา':r['รอบการรักษา']||'','รายการยา':[]}; drugsData.filter(d=>d['ชื่อสูตรยา']===r['ชื่อสูตรยา']).forEach(d=>{ if(d['ชื่อยา']&&d['ขนาดยา']) R['รายการยา'].push({'ชื่อยา':d['ชื่อยา'],'ขนาดยา':d['ขนาดยา'],'ความถี่ในการให้':d['ความถี่ในการให้']||'','maximum_dose':d['maximum_dose']||null}); }); if(R['รายการยา'].length>0) newRegs.push(R); }); if(newRegs.length>0){ addRegimens(newRegs); showToast('อัปโหลดสำเร็จ',`นำเข้าสูตรยา ${newRegs.length} สูตรจาก Excel`,'success'); } else showToast('ไม่พบสูตรยา','ตรวจข้อมูลในไฟล์ Excel','error'); }catch{ showToast('อ่านไฟล์ Excel ไม่สำเร็จ','กรุณาตรวจรูปแบบไฟล์','error'); } }; reader.readAsArrayBuffer(file); }
+    function addRegimens(newRegs){ const existing=regimens.map(r=>r['ชื่อสูตรยา']); const unique=newRegs.filter(r=>!existing.includes(r['ชื่อสูตรยา'])); regimens.push(...unique); localStorage.setItem('chemotherapyRegimens', JSON.stringify(regimens)); updateRegimenSelect(); displayUploadedRegimens(unique); updateRegimenCount(); }
+    function displayUploadedRegimens(list){ const wrap=document.getElementById('uploadedRegimens'); const box=document.getElementById('regimensList'); box.innerHTML=''; list.forEach(r=>{ const d=document.createElement('div'); d.className='card'; d.style.padding='1rem'; d.style.marginBottom='.75rem'; d.innerHTML=`<h4 style="color:#1e40af;margin-bottom:.25rem">${escapeHtml(r['ชื่อสูตรยา'])}</h4><div class="hint" style="margin-bottom:.5rem">${escapeHtml(r['ชนิดของมะเร็ง']||'')}</div><div><b>รอบการรักษา:</b> ${escapeHtml(r['รอบการรักษา']||'-')}</div><div style="margin-top:.5rem"><b>รายการยา:</b></div><ul style="margin-left:1rem">${r['รายการยา'].map(x=>`<li>${escapeHtml(x['ชื่อยา'])} — ${escapeHtml(x['ขนาดยา'])}</li>`).join('')}</ul>`; box.appendChild(d); }); wrap.style.display=list.length>0?'block':'none'; }
 
     function saveSettings(){
       settings.useBsaLimit=document.getElementById('useBsaLimit').checked;
       settings.bsaLimit=parseFloat(getNum('bsaLimit'))||2.0;
       settings.useGfrLimit=document.getElementById('useGfrLimit').checked;
-      settings.gfrLimit=parseFloat(getNum('gfrLimit'))||125;
+      setVal('gfrLimit', settings.gfrLimit=parseFloat(getNum('gfrLimit'))||125);
       settings.roundingRule=g('roundingRule')||'none';
       settings.roundingStep=parseFloat(getNum('roundingStep'))||1;
       settings.useMinScr=document.getElementById('useMinScr').checked;
@@ -1056,15 +947,8 @@
     function toggleTheme(){
       const sw=document.getElementById('themeSwitch');
       const dark=document.documentElement.getAttribute('data-theme')==='dark';
-      if(dark){
-        document.documentElement.setAttribute('data-theme','light');
-        sw.classList.remove('active'); sw.setAttribute('aria-checked','false');
-        localStorage.setItem('theme','light');
-      }else{
-        document.documentElement.setAttribute('data-theme','dark');
-        sw.classList.add('active'); sw.setAttribute('aria-checked','true');
-        localStorage.setItem('theme','dark');
-      }
+      if(dark){ document.documentElement.setAttribute('data-theme','light'); sw.classList.remove('active'); localStorage.setItem('theme','light'); }
+      else{ document.documentElement.setAttribute('data-theme','dark'); sw.classList.add('active'); localStorage.setItem('theme','dark'); }
     }
 
     function printResults(){ if(document.getElementById('results').style.display==='none'){ showToast('ไม่มีผลลัพธ์','กรุณาคำนวณก่อนพิมพ์','error'); return; } window.print(); }
@@ -1119,46 +1003,100 @@
       localStorage.setItem('chemotherapyRegimens', JSON.stringify(regimens));
     }
 
-    function downloadJSONTemplate(){
-      const tpl = {
-        "สูตรยาเคมีบำบัด":[
-          {
-            "ชื่อสูตรยา":"SAMPLE regimen",
-            "ชนิดของมะเร็ง":"ตัวอย่าง",
-            "รอบการรักษา":"ใส่คำอธิบาย",
-            "รายการยา":[
-              {"ชื่อยา":"Drug A","ขนาดยา":"100 mg/m²","ความถี่ในการให้":"q21d","maximum_dose":null}
-            ]
-          }
-        ]
+    /* ---------- Templates download from GitHub ---------- */
+    async function downloadJSONTemplate(){
+      const tryFetch = async (url) => {
+        const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const text = await res.text();
+        const trimmed = text.trim();
+        if (trimmed.length < 10 || (!trimmed.startsWith('{') && !trimmed.startsWith('['))) {
+          throw new Error('Invalid JSON content');
+        }
+        return new Blob([text], { type: 'application/json' });
       };
-      const blob = new Blob([JSON.stringify(tpl,null,2)], {type:'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='regimens.json'; a.click(); URL.revokeObjectURL(a.href);
+      for (const url of JSON_TEMPLATE_CANDIDATES) {
+        try {
+          const blob = await tryFetch(url);
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'regimens.json';
+          document.body.appendChild(a);
+          a.click();
+          URL.revokeObjectURL(a.href);
+          a.remove();
+          showToast('ดาวน์โหลดสำเร็จ','บันทึก regimens.json จาก GitHub แล้ว','success');
+          return;
+        } catch (e) { console.warn('JSON template fallback failed:', e); }
+      }
+      showToast('ไม่พบ regimens.json บน GitHub','โปรดตรวจ path ใน repo หรืออัปเดต JSON_TEMPLATE_CANDIDATES', 'error');
     }
-    function downloadExcelTemplate(){
-      showToast('คำแนะนำ','ขณะนี้มีตัวอย่าง JSON พร้อมใช้งาน หากต้องการ Excel ให้เตรียมชีต Regimens และ Drugs ตามคู่มือ', 'success');
+
+    async function downloadExcelTemplate(){
+      const tryFetchBlob = async (url) => {
+        const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        if (!blob || blob.size < 1024) throw new Error('Blob too small');
+        return blob;
+      };
+      for (const url of XLSX_TEMPLATE_CANDIDATES) {
+        try {
+          const blob = await tryFetchBlob(url);
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'chemo_regimens_template.xlsx';
+          document.body.appendChild(a);
+          a.click();
+          URL.revokeObjectURL(a.href);
+          a.remove();
+          showToast('ดาวน์โหลดสำเร็จ','บันทึก Excel Template จาก GitHub แล้ว','success');
+          return;
+        } catch (e) { console.warn('XLSX template fallback failed:', url, e); }
+      }
+
+      // สุดท้าย: สร้างไฟล์เทมเพลตสำรองให้อัตโนมัติ
+      try{
+        const wb = XLSX.utils.book_new();
+        const regimensSheet = XLSX.utils.json_to_sheet([
+          { "ชื่อสูตรยา":"FOLFOX-4 regimen", "ชนิดของมะเร็ง":"Colorectal", "รอบการรักษา":"12 cycles" },
+          { "ชื่อสูตรยา":"TCH regimen",      "ชนิดของมะเร็ง":"HER2+ Breast", "รอบการรักษา":"6 cycles + H to 1 year" }
+        ]);
+        XLSX.utils.book_append_sheet(wb, regimensSheet, 'Regimens');
+
+        const drugsSheet = XLSX.utils.json_to_sheet([
+          { "ชื่อสูตรยา":"FOLFOX-4 regimen","ชื่อยา":"Oxaliplatin","ขนาดยา":"85 mg/m² IV day 1","ความถี่ในการให้":"ทุก 14 วัน","maximum_dose":"" },
+          { "ชื่อสูตรยา":"FOLFOX-4 regimen","ชื่อยา":"Leucovorin","ขนาดยา":"200 mg/m² IV day 1","ความถี่ในการให้":"ทุก 14 วัน","maximum_dose":"" },
+          { "ชื่อสูตรยา":"FOLFOX-4 regimen","ชื่อยา":"Fluorouracil (5-FU) bolus","ขนาดยา":"400 mg/m² IV bolus day 1","ความถี่ในการให้":"ทุก 14 วัน","maximum_dose":"" },
+          { "ชื่อสูตรยา":"FOLFOX-4 regimen","ชื่อยา":"Fluorouracil (5-FU) infusion","ขนาดยา":"600 mg/m² IV over 22h day 1","ความถี่ในการให้":"ทุก 14 วัน","maximum_dose":"" },
+          { "ชื่อสูตรยา":"TCH regimen","ชื่อยา":"Docetaxel","ขนาดยา":"75 mg/m² IV day 1","ความถี่ในการให้":"ทุก 21 วัน (6 cycles)","maximum_dose":"" },
+          { "ชื่อสูตรยา":"TCH regimen","ชื่อยา":"Carboplatin","ขนาดยา":"AUC 6 mg/ml/min IV day 1","ความถี่ในการให้":"ทุก 21 วัน (6 cycles)","maximum_dose":"900 mg" },
+          { "ชื่อสูตรยา":"TCH regimen","ชื่อยา":"Trastuzumab (loading dose)","ขนาดยา":"8 mg/kg IV day 1","ความถี่ในการให้":"cycle 1 เท่านั้น","maximum_dose":"" },
+          { "ชื่อสูตรยา":"TCH regimen","ชื่อยา":"Trastuzumab (maintenance)","ขนาดยา":"6 mg/kg IV","ความถี่ในการให้":"ทุก 21 วัน (รวม ~18 cycles)","maximum_dose":"" }
+        ]);
+        XLSX.utils.book_append_sheet(wb, drugsSheet, 'Drugs');
+
+        const instructionsSheet = XLSX.utils.json_to_sheet([
+          { "หัวข้อ":"วิธีใช้", "รายละเอียด":"เพิ่ม Regimens และ Drugs ให้ชื่อสูตรยาตรงกัน ระบบจะอ่านตามคอลัมน์" },
+          { "หัวข้อ":"ชีตที่ต้องมี", "รายละเอียด":"Regimens, Drugs (และ Instructions เป็นตัวเลือก)" }
+        ]);
+        XLSX.utils.book_append_sheet(wb, instructionsSheet, 'Instructions');
+
+        const wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+        const blob = new Blob([wbout], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'chemo_regimens_template.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(a.href);
+        a.remove();
+        showToast('ดาวน์โหลดสำเร็จ (โหมดสำรอง)','สร้าง Excel Template สำรองให้แล้ว เนื่องจากหาไฟล์ใน GitHub ไม่พบ','success');
+      }catch(e){
+        console.error(e);
+        showToast('ไม่พบ Excel Template บน GitHub','และไม่สามารถสร้างไฟล์สำรองได้ โปรดตรวจ path ใน repo', 'error');
+      }
     }
   </script>
-
-  <!-- (ตัวอย่าง badge รูป) สามารถเอาออกได้หากไม่ต้องการ -->
-  <img
-    src="https://lh5.googleusercontent.com/d/16RI1EceAxvgTLYE2VMztXEqDzDmqhIru"
-    alt="badge"
-    loading="lazy"
-    decoding="async"
-    style="
-      position: fixed;
-      right: 16px;
-      bottom: calc(16px + env(safe-area-inset-bottom));
-      width: clamp(50px, 8vw, 90px);
-      height: auto;
-      border: 0;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.18);
-      object-fit: contain;
-      pointer-events: none;
-      z-index: 9999;
-    "
-  >
 </body>
 </html>
